@@ -3,30 +3,52 @@ const cors = require("cors");
 const morgan = require("morgan");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./config/swagger");
-
 const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(morgan("dev"));
+/**
+ * Middleware setup
+ */
+app.use(cors()); // Enable Cross-Origin Resource Sharing
+app.use(express.json()); // Parse incoming JSON requests
+app.use(morgan("dev")); // Log HTTP requests
 
-// Swagger Docs
+/**
+ * Swagger API documentation route
+ */
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Routes defines here
+/**
+ * Root route - Welcome message
+ */
 app.get("/", (req, res) => {
   res.send("Welcome to the Heaven Upon Backend API");
 });
 
-// User routes
+/**
+ * User routes
+ */
 app.use("/api/users", userRoutes);
 
-// Health check
-app.get("/", (req, res) => {
+/**
+ * Health check endpoint
+ */
+app.get("/health", (req, res) => {
   res.json({ message: "Backend is running 🚀" });
+});
+
+/**
+ * Global error handler for uncaught errors
+ */
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err.message);
+  res.status(err.status || 500).json({
+    error: {
+      message: err.message || "Internal Server Error",
+      stack: process.env.NODE_ENV === "production" ? undefined : err.stack,
+    },
+  });
 });
 
 module.exports = app;
